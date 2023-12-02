@@ -1,7 +1,7 @@
 # Custom additions
 bin/
 lists/
-
+output_log.txt
 
 
 # Byte-compiled / optimized / DLL files
