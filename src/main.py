@@ -51,6 +51,7 @@ def main(argc: int, argv: list):
         f.write(f"# {current_time}\n\n# Start log:\n\n")
 
         sys.stdout = f
+
         if argc == 1 or (argc == 2 and argv[1] != "--disable-safety-lock"):
             print_warning_message()
             sys.exit(0)
@@ -81,20 +82,34 @@ def main(argc: int, argv: list):
             # Initialize the Git repository object
         repo = git.Repo('.')
 
-        # Check if there are any changes
-        if repo.is_dirty(untracked_files=True):
-            print("Changes detected, updating the repository...")
+        # Fetch and merge with the remote branch (force update)
+        repo.git.fetch('--all')
+        repo.git.reset('--hard', 'origin/master')  # Replace 'origin/master' with the branch you want to force pull
 
-            # Add changes
+        print("Force pulled the repository.")
+
+        # Attempt to add changes
+        try:
+            print("Adding changes to the staging area...")
             repo.git.add('lists/')
+            # repo.git.add('output_log.txt')  # Optional
 
-            # Commit changes
-            repo.git.commit('-m', 'Update detected in lists. Applying update.')
+            # Check if there are any changes
+            if repo.is_dirty(untracked_files=True):
+                print("Changes detected, updating the repository...")
 
-            # Push changes
-            repo.git.push('-f', 'all', 'master')
-        else:
-            print("No changes detected. No update required.")
+                # Commit changes
+                print("Committing changes...")
+                repo.git.commit('-m', 'Update detected in lists. Applying update.')
+
+                # Push changes
+                print("Pushing changes to remote repository...")
+                repo.git.push('origin', 'master')
+                print("Changes pushed successfully.")
+            else:
+                print("No changes detected. No update required.")
+        except git.exc.GitCommandError as e:
+            print(f"An error occurred with Git operations: {e}")
 
 if __name__ == "__main__":
     main(len(argv), argv)
